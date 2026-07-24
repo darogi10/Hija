@@ -16,7 +16,7 @@
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
-            overflow-y: auto; /* Permite scroll vertical */
+            overflow-y: auto;
         }
 
         #canvas-container {
@@ -32,7 +32,7 @@
         .overlay-content {
             position: relative;
             z-index: 2;
-            min-height: 480vh; /* Scroll largo para explorar las 100 palabras */
+            min-height: 480vh;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -97,15 +97,16 @@
             transform: scale(1.05);
         }
 
-        /* Contenedor de YouTube fuera de la pantalla en lugar de display:none */
+        /* Contenedor transparente y discreto dentro de la pantalla */
         #youtube-player-container {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
+            position: fixed;
+            bottom: 0;
+            right: 0;
             width: 1px;
             height: 1px;
-            opacity: 0;
+            opacity: 0.01;
             pointer-events: none;
+            z-index: -1;
         }
 
         @keyframes bounce {
@@ -145,13 +146,13 @@
         let isPlaying = false;
         const musicBtn = document.getElementById('musicBtn');
 
-        // REEMPLAZA ESTE TEXTO POR EL ID DEL VIDEO DE YOUTUBE (ejemplo: 'LGWUmNnZ7WY')
-        const YOUTUBE_VIDEO_ID = '_7TInU954Sg'; 
+        // ID de YouTube totalmente permitido para iframe ('Motivos' - Abel Pintos)
+        const YOUTUBE_VIDEO_ID = '9pQ9U2T_G-c'; 
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtube-player', {
-                height: '200',
-                width: '200',
+                height: '1',
+                width: '1',
                 videoId: YOUTUBE_VIDEO_ID,
                 playerVars: {
                     'autoplay': 0,
@@ -163,11 +164,9 @@
         }
 
         function toggleMusic() {
-            if (!player || typeof player.getPlayerState !== 'function') return;
+            if (!player || typeof player.playVideo !== 'function') return;
 
-            const state = player.getPlayerState();
-            
-            if (state === 1) { // 1 = Reproduciendo
+            if (isPlaying) {
                 player.pauseVideo();
                 musicBtn.textContent = '🎵 Reproducir Música';
                 isPlaying = false;
@@ -179,17 +178,6 @@
         }
 
         musicBtn.addEventListener('click', toggleMusic);
-
-        // Reproduce al primer clic en la pantalla si aún no está sonando
-        window.addEventListener('click', () => {
-            if (!isPlaying && player && typeof player.getPlayerState === 'function') {
-                const state = player.getPlayerState();
-                if (state !== 1) {
-                    toggleMusic();
-                }
-            }
-        }, { once: true });
-
 
         // --- CONFIGURACIÓN DE THREE.JS ---
         const container = document.getElementById('canvas-container');
@@ -325,10 +313,8 @@
             return sprite;
         }
 
-        // Distribución uniforme de las 100 palabras a lo largo del scroll
         phrases.forEach((phrase, index) => {
             const sprite = createTextSprite(phrase);
-            
             const yPos = (index / phrases.length) * -2600 + 300; 
 
             sprite.position.set(
@@ -382,7 +368,7 @@
         // --- AJUSTE RESPONSIVO ---
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            camera.updatePolygonMatrix ? camera.updatePolygonMatrix() : camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
